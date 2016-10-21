@@ -9,6 +9,11 @@
     },
     {
       "renderer": "region",
+      "name": "sth",
+      "class": "normal"
+    },
+    {
+      "renderer": "region",
       "name": "us-east-1",
       "maxVolume": 50000,
       "class": "normal",
@@ -41,7 +46,7 @@
       "source": "INTERNET",
       "target": "us-east-1",
       "metrics": {
-        "normal": 26037.626,
+        "normal": 222223.626,
         "danger": 92.37
       },
       "notices": [

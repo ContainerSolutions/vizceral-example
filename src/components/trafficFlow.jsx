@@ -120,6 +120,24 @@ class TrafficFlow extends React.Component {
     this.setState({ currentView: currentView, objectToHighlight: parsedQuery.highlighted });
   }
 
+  myTimer () {
+    request.get('sample_data_simple.json')
+      .set('Accept', 'application/json')
+      .end((err, res) => {
+        if (res && res.status === 200) {
+          this.traffic.clientUpdateTime = Date.now();
+          this.updateData(res.body);
+          this.forceUpdate();
+        }
+      });
+    window.setTimeout(() => { this.myTimer(); }, 1000);
+  }
+
+  registerUpdateHandler () {
+    this.traffic = { nodes: [], connections: [] };
+    window.setTimeout(() => { this.myTimer(); }, 1000);
+  }
+
   beginSampleData () {
     this.traffic = { nodes: [], connections: [] };
     request.get('sample_data.json')
@@ -134,7 +152,8 @@ class TrafficFlow extends React.Component {
 
   componentDidMount () {
     this.checkInitialRoute();
-    this.beginSampleData();
+    // this.beginSampleData();
+    this.registerUpdateHandler();
 
     // Listen for changes to the stores
     filterStore.addChangeListener(this.filtersChanged);
@@ -145,10 +164,11 @@ class TrafficFlow extends React.Component {
   }
 
   shouldComponentUpdate (nextProps, nextState) {
-    if (!this.state.currentView ||
-        this.state.currentView[0] !== nextState.currentView[0] ||
-        this.state.currentView[1] !== nextState.currentView[1] ||
-        this.state.highlightedObject !== nextState.highlightedObject) {
+  //  if (!this.state.currentView ||
+  //      this.state.currentView[0] !== nextState.currentView[0] ||
+  //      this.state.currentView[1] !== nextState.currentView[1] ||
+  //      this.state.highlightedObject !== nextState.highlightedObject) {
+    if (true) {
       const titleArray = (nextState.currentView || []).slice(0);
       titleArray.unshift('Vizceral');
       document.title = titleArray.join(' / ');
@@ -163,6 +183,7 @@ class TrafficFlow extends React.Component {
           selected: nextState.currentView,
           highlighted: highlightedObjectName
         };
+        console.log('Refreshing.... ');
         window.history.pushState(state, state.title, state.url);
       }
     }
@@ -214,7 +235,7 @@ class TrafficFlow extends React.Component {
       this.setState({
         regionUpdateStatus: regionUpdateStatus,
         timeOffset: newTraffic.clientUpdateTime - newTraffic.serverUpdateTime,
-        lastUpdatedTime: lastUpdatedTime,
+        lastUpdatedTime: Date.now(),
         trafficData: updatedTraffic
       });
     }
