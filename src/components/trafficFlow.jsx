@@ -60,7 +60,8 @@ class TrafficFlow extends React.Component {
       timeOffset: 0,
       modes: {
         detailedNode: 'volume'
-      }
+      },
+      secondsElapsed: 0
     };
 
     // Browser history support
@@ -120,7 +121,7 @@ class TrafficFlow extends React.Component {
     this.setState({ currentView: currentView, objectToHighlight: parsedQuery.highlighted });
   }
 
-  beginSampleData () {
+  beginReadData () {
     this.traffic = { nodes: [], connections: [] };
     request.get('sample_data.json')
       .set('Accept', 'application/json')
@@ -132,9 +133,12 @@ class TrafficFlow extends React.Component {
       });
   }
 
+
+
   componentDidMount () {
     this.checkInitialRoute();
-    this.beginSampleData();
+    //this.beginSampleData();
+    this.interval = setInterval(() => this.beginReadData(), 1000);
 
     // Listen for changes to the stores
     filterStore.addChangeListener(this.filtersChanged);
