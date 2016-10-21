@@ -110,7 +110,7 @@ body > .container {
   --colorDonutInternalColor: rgb(35, 35, 35);
   --colorDonutInternalColorHighlighted: rgb(255, 255, 255);
   --colorConnectionLine: rgb(91, 91, 91);
-  --colorPageBackground: rgb(45, 45, 45);
+  --colorPageBackground: rgb(0, 0, 0);
   --colorPageBackgroundTransparent: rgba(45, 45, 45, 0);
   --colorBorderLines: rgb(137, 137, 137);
 }
