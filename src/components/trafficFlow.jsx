@@ -134,10 +134,9 @@ class TrafficFlow extends React.Component {
   }
 
 
-
   componentDidMount () {
     this.checkInitialRoute();
-    //this.beginSampleData();
+    // this.beginSampleData();
     this.interval = setInterval(() => this.beginReadData(), 1000);
 
     // Listen for changes to the stores
