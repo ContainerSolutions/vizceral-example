@@ -313,16 +313,6 @@ class TrafficFlow extends React.Component {
     const connectionToShowDetails = this.state.highlightedObject && this.state.highlightedObject.type === 'connection' ? this.state.highlightedObject : undefined;
     const showLoadingCover = !!(this.state.currentView && this.state.currentView[0] && !this.state.renderedGraphs[this.state.currentView[0]]);
 
-    let matches;
-    if (this.state.currentGraph) {
-      matches = {
-        totalMatches: this.state.matches.total,
-        visibleMatches: this.state.matches.visible,
-        total: this.state.currentGraph.nodeCounts.total,
-        visible: this.state.currentGraph.nodeCounts.visible
-      };
-    }
-
     return (
       <div className="vizceral-container">
         { this.state.redirectedFrom ?
