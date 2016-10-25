@@ -10,13 +10,9 @@ import queryString from 'query-string';
 import request from 'superagent';
 
 import Breadcrumbs from './breadcrumbs';
-import DisplayOptions from './displayOptions';
-import FilterControls from './filterControls';
 import DetailsPanelConnection from './detailsPanelConnection';
 import DetailsPanelNode from './detailsPanelNode';
 import LoadingCover from './loadingCover';
-import Locator from './locator';
-import OptionsPanel from './optionsPanel';
 import UpdateStatus from './updateStatus';
 
 import filterActions from './filterActions';
@@ -337,11 +333,6 @@ class TrafficFlow extends React.Component {
         <div className="subheader">
           <Breadcrumbs rootTitle="global" navigationStack={this.state.currentView || []} navigationCallback={this.navigationCallback} />
           <UpdateStatus status={this.state.regionUpdateStatus} baseOffset={this.state.timeOffset} warnThreshold={180000} />
-          <div style={{ float: 'right', paddingTop: '4px' }}>
-            { (!globalView && matches) && <Locator changeCallback={this.locatorChanged} searchTerm={this.state.searchTerm} matches={matches} clearFilterCallback={this.filtersCleared} /> }
-            <OptionsPanel title="Filters"><FilterControls /></OptionsPanel>
-            <OptionsPanel title="Display"><DisplayOptions options={this.state.displayOptions} changedCallback={this.displayOptionsChanged} /></OptionsPanel>
-          </div>
         </div>
         <div className="service-traffic-map">
           <div style={{ position: 'absolute', top: '0px', right: nodeToShowDetails || connectionToShowDetails ? '380px' : '0px', bottom: '0px', left: '0px' }}>
