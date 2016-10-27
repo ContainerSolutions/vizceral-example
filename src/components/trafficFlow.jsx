@@ -8,6 +8,9 @@ import 'vizceral-react/dist/vizceral.css';
 import keypress from 'keypress.js';
 import queryString from 'query-string';
 import request from 'superagent';
+import Influx from 'influx';
+import cors from 'cors';
+
 
 import Breadcrumbs from './breadcrumbs';
 import DetailsPanelConnection from './detailsPanelConnection';
@@ -19,6 +22,11 @@ import filterActions from './filterActions';
 import filterStore from './filterStore';
 
 const listener = new keypress.Listener();
+
+const influx = new Influx.InfluxDB({
+  host: '104.199.47.18',
+  database: 'k8s'
+})
 
 function animate (time) {
   requestAnimationFrame(animate);
@@ -119,7 +127,51 @@ class TrafficFlow extends React.Component {
 
   beginReadData () {
     this.traffic = { nodes: [], connections: [] };
-    request.get('sample_data.json')
+
+    var query = "select mean(value) as \"network/rx_rate\" from \"network/rx_rate\" \
+       where type = 'pod' and time > now() - 1m \
+       group by hostname, pod_name, time(1m) limit 1";
+
+    var proxy = 'http://localhost:3000/?url=';
+    var db = 'k8s';
+    var url = 'http://104.199.47.18:8086/query?';
+    url += '&db=' + encodeURIComponent(db);
+    url += '&q=' + encodeURIComponent(query);
+
+    var finalUrl = proxy + encodeURIComponent(url);
+
+    console.log("Final " + finalUrl);
+    var that = this;
+    $.ajax({
+        type: "GET",
+        url: finalUrl,
+        data: {},
+        xhrFields: {
+            withCredentials: false
+        },
+        crossDomain: true,
+        dataType: 'json',
+        success: function(data, textStatus, jqXHR) {
+          var res = that.produceVizceralUpdate(data);
+          console.log(res);
+          that.updateData(res);
+        }
+    });
+
+    /*
+    influx.query(`
+      `).then(result => {
+        //res.json(result)
+        console.log(result);
+      }).catch(err => {
+              console.log("Error");
+
+        //res.status(500).send(err.stack)
+      })
+     */
+
+
+    /* request.get('sample_data.json')
       .set('Accept', 'application/json')
       .end((err, res) => {
         if (res && res.status === 200) {
@@ -127,6 +179,109 @@ class TrafficFlow extends React.Component {
           this.updateData(res.body);
         }
       });
+      */
+  }
+
+  produceVizceralUpdate(data) {
+    var result = {
+      "renderer": "global",
+      "name": "edge",
+      "nodes": [
+        {
+          "renderer": "region",
+          "name": "INTERNET",
+          "class": "normal"
+        }],
+      "connections": []
+    };
+
+    var detailed = {};
+
+    $.each(data.results[0].series, function( key, value ) {
+
+      var updated = Date.now();
+      function updateStats(stats, region, pod, value) {
+        if(!(region in stats)) {
+          stats[region] = {};
+        }
+        if(!(pod in stats[region])) {
+          stats[region][pod] = {};
+        }
+        for(var i = 0; i< value.columns.length; i++) {
+          stats[region][pod][value.columns[i]] = value.values[0][i];
+        }
+      }
+      var re_gce = /^gke-gce-(.*)-default-pool-.*$/;
+      var re_aws = /^ip-.*$/;
+
+      var found;
+      var str = value.tags.hostname;
+      if ((found = str.match(re_gce))!== null) {
+        var region = found[1];
+        updateStats(detailed, region, value.tags.pod_name, value);
+      } else if ((found = str.match(re_aws))!== null) {
+        updateStats(detailed, "aws", value.tags.pod_name, value);
+      } else {
+        console.log("No match found");
+      }
+
+      for(var region in detailed) {
+        var reg = {
+          "renderer": "region",
+          "name": region,
+          "maxVolume": 50000,
+          "class": "normal",
+          "updated": updated,
+          "nodes": [
+            {
+              "name": "INTERNET",
+              "class": "normal"
+            }
+          ],
+          "connections": []
+        };
+        for(var pod in detailed[region]) {
+          reg.nodes.push({
+              "name": pod,
+              "class": "normal"
+            }
+          );
+        }
+        var sumRegionRx = 0;
+        for(var pod in detailed[region]) {
+          reg.nodes.push({
+              "name": pod,
+              "class": "normal"
+            }
+          );
+          var podRx = detailed[region][pod]['network/rx_rate'];
+          sumRegionRx += podRx;
+          reg.connections.push({
+            "source": "INTERNET",
+            "target": pod,
+            "metrics": {
+               "danger": 0,
+               "normal": podRx
+            },
+          "class": "normal"
+          });
+        }
+        result.nodes.push(reg);
+        result.connections.push({
+          "source": "INTERNET",
+          "target": region,
+          "metrics": {
+            "normal": sumRegionRx,
+            "danger": 0
+          },
+          "notices": [
+          ],
+          "class": "normal"
+        });
+      }
+    });
+      console.log(result);
+    return result;
   }
 
 
